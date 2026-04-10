@@ -1,5 +1,5 @@
-<?php
 
+<?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/Solicitud.php';
 require_once __DIR__ . '/../models/Taller.php';
@@ -19,44 +19,40 @@ class AdminController
 
     public function solicitudes()
     {
+        if (session_status() === PHP_SESSION_NONE) session_start();
         if (!isset($_SESSION['id']) || $_SESSION['rol'] !== 'admin') {
             header('Location: index.php?page=login');
             return;
         }
         require __DIR__ . '/../views/admin/solicitudes.php';
     }
-    
-    // Aprobar solicitud
-    public function aprobar()
+
+    public function aprobarSolicitud()
     {
-        if (!isset($_SESSION['id']) || $_SESSION['rol'] !== 'admin') {
-            echo json_encode(['success' => false, 'error' => 'No autorizado']);
-            return;
-        }
-        
-        $solicitudId = $_POST['id_solicitud'] ?? 0;
-        
-        try {
-            
-            echo json_encode(['success' => true]);
-            
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'];
+            $taller_id = $_POST['taller_id'];
+
+            if ($this->solicitudModel->actualizarEstado($id, 'aprobado')) {
+                $this->tallerModel->descontarCupo($taller_id);
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false]);
+            }
+            exit;
         }
     }
-    public function rechazar()
+
+    public function rechazarSolicitud()
     {
-        if (!isset($_SESSION['id']) || $_SESSION['rol'] !== 'admin') {
-            echo json_encode(['success' => false, 'error' => 'No autorizado']);
-            return;
-        }
-        
-        $solicitudId = $_POST['id_solicitud'] ?? 0;
-        
-        if ($this->solicitudModel->rechazar($solicitudId)) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['success' => false, 'error' => 'Error al rechazar']);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'];
+            if ($this->solicitudModel->actualizarEstado($id, 'rechazado')) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false]);
+            }
+            exit;
         }
     }
 }

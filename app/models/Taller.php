@@ -1,41 +1,26 @@
+
 <?php
-class Taller
-{
-
+class Taller {
     private $conn;
+    private $table_name = "TALLER"; 
 
-    public function __construct($db)
-    {
+    public function __construct($db) {
         $this->conn = $db;
     }
 
-    public function getAll()
-    {
-        $result = $this->conn->query("SELECT * FROM talleres ORDER BY nombre");
-        $talleres = [];
-        while ($row = $result->fetch_assoc()) {
-            $talleres[] = $row;
+    public function getAllDisponibles() {
+        try {
+            $query = "SELECT ID_TALLER, NOMBRE, DESCRIPCION, FECHA, CUPO 
+                      FROM " . $this->table_name . " 
+                      WHERE CUPO > 0";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en getAllDisponibles: " . $e->getMessage());
+            return [];
         }
-        return $talleres;
-    }
-
-    public function getAllDisponibles()
-    {
-
-    }
-
-    public function getById($id)
-    {
-    
-    }
-
-    public function descontarCupo($tallerId)
-    {
-
-    }
-
-    public function sumarCupo($tallerId)
-    {
-
     }
 }

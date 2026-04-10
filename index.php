@@ -1,97 +1,40 @@
-<?php
-session_start();
 
-require_once './app/controllers/UserController.php';
-require_once './app/controllers/TallerController.php';
-require_once './app/controllers/AdminController.php';
-require_once './app/models/Taller.php';
-require_once './app/models/Solicitud.php';
-require_once './app/models/User.php';
+<?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once 'app/config/database.php';
+require_once 'app/controllers/UserController.php';
 
 $page = $_GET['page'] ?? 'login';
+$action = $_GET['action'] ?? '';
 
-// ========== RUTAS GET OBTENER DATOS ==========
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+$userCtrl = new UserController();
 
-    // Obtener listado de talleres
-    if ($_GET['option'] ?? "" == "talleres_json") {
-        $taller = new TallerController();
-        $taller->getTalleresJson();
-        exit;
-    }
-
-    // Obtener solicitudes pendientes
-    if ($_GET['option'] ?? "" == "solicitudes_json") {
-        $admin = new AdminController();
-        //$admin->getSolicitudesJson();
-        exit;
-    }
-}
-
-// ========== RUTAS FORMULARIO POST ==========
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    if ($_POST['option'] == "login") {
-        $auth = new UserController();
-        $auth->login();
-        exit;
-    }
-
-    if ($_POST['option'] == "register") {
-        $auth = new UserController();
-        $auth->registro();
-        exit;
-    }
-
-    if ($_POST['option'] == "logout") {
-        $auth = new UserController();
-        $auth->logout();
-        exit;
-    }
-
-    if ($_POST['option'] == "solicitar") {
-        $taller = new TallerController();
-        $taller->solicitar();
-        exit;
-    }
-
-    if ($_POST['option'] == "aprobar") {
-        $admin = new AdminController();
-        $admin->aprobar();
-        exit;
-    }
-
-    if ($_POST['option'] == "rechazar") {
-        $admin = new AdminController();
-        $admin->rechazar();
-        exit;
-    }
-}
-
-// ========== RUTAS DE VISTAS ==========
 switch ($page) {
-
-    case "talleres":
-        $taller = new TallerController();
-        $taller->index();
+    case 'login':
+        if ($action === 'login') {
+            $userCtrl->login();
+        } else {
+            $userCtrl->showLogin();
+        }
         break;
 
-    case "admin":
-        $admin = new AdminController();
-        $admin->solicitudes();
+    case 'register':
+        if ($action === 'registro') {
+            $userCtrl->registro();
+        } else {
+            $userCtrl->showRegister();
+        }
         break;
 
-    case "logout":
-        $auth = new UserController();
-        $auth->logout();
+    case 'logout':
+        $userCtrl->logout();
         break;
-    case "registro":
-        $auth = new UserController();
-        $auth->showRegistro();
-        break;
-    case "login":
+
     default:
-        $auth = new UserController();
-        $auth->showLogin();
+        $userCtrl->showLogin();
         break;
 }

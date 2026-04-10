@@ -1,0 +1,20 @@
+
+version: '3.8'
+services:
+  web:
+    build: .
+    container_name: rolvin_tours_web
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+
+  db:
+    image: gvenzl/oracle-xe:latest
+    container_name: oracle_db
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=system
+      - APP_USER=ROLVIN_USER
+      - APP_USER_PASSWORD=password123

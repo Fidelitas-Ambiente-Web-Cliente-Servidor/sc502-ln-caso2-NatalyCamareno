@@ -1,65 +1,63 @@
-<?php
 
-require_once __DIR__ . '/../../config/database.php';
+<?php
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/User.php';
 
-class UserController
-{
+class UserController {
+    private $userModel;
 
-    private $model;
-
-    public function __construct()
-    {
+    public function __construct() {
         $database = new Database();
         $db = $database->connect();
-        $this->model = new User($db);
+        $this->userModel = new User($db);
     }
 
-    public function showLogin()
-    {
-        require __DIR__ . '/../views/login.php';
+    public function showLogin() {
+        require_once __DIR__ . '/../views/login.php';
     }
 
-    public function showRegistro()
-    {
-        require __DIR__ . '/../views/register.php';
+    public function showRegister() {
+        require_once __DIR__ . '/../views/register.php';
     }
 
-    public function login()
-    {
-        $username = $_POST['username'];
-        $password = $_POST['password'];
-
-        $user = $this->model->login($username);
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['id'] = $user['id'];
-            $_SESSION['user'] = $user['username'];
-            $_SESSION['rol'] = $user['rol'];
-
-            echo json_encode(['response' => "00", 'rol' => $user['rol'], 'message' => "Login exitoso"]);
-        } else {
-            echo json_encode(['response' => "01", 'message' => "Error de autentificacion"]);
+    public function login() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $correo = $_POST['correo'] ?? '';
+            $password = $_POST['password'] ?? '';
+            $user = $this->userModel->login($correo, $password);
+            
+            if ($user) {
+                if (session_status() === PHP_SESSION_NONE) session_start();
+                $_SESSION['nombre'] = $user['NOMBRE'];
+                $_SESSION['rol'] = $user['ROL'];
+                header('Location: index.php?page=admin_panel');
+                exit();
+            } else {
+                header('Location: index.php?page=login&error=1');
+                exit();
+            }
         }
     }
 
-    public function registro()
-    {
-        $username = $_POST['username'];
-        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-
-        $result = $this->model->create($username, $password);
-
-        if ($result) {
-            echo json_encode(['response' => "00", 'message' => "Registro exitoso"]);
-        } else {
-            echo json_encode(['response' => "01", 'message' => "Error al registrar"]);
+    public function registro() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $nombre = $_POST['nombre'] ?? '';
+            $correo = $_POST['correo'] ?? '';
+            $password = $_POST['password'] ?? '';
+            
+            if ($this->userModel->registrar($nombre, $correo, $password)) {
+                header('Location: index.php?page=login&msg=success');
+            } else {
+                header('Location: index.php?page=register&error=1');
+            }
+            exit();
         }
     }
 
-    public function logout()
-    {
+    public function logout() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
         session_destroy();
-        echo json_encode(['response' => "00", 'message' => "Sesión cerrada"]);
+        header('Location: index.php?page=login');
+        exit();
     }
 }

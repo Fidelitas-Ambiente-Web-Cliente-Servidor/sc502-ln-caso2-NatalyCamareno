@@ -1,39 +1,38 @@
-<?php
-class User
-{
-    private $conn;
 
-    public function __construct($db)
-    {
+<?php
+class User {
+    private $conn;
+    private $table_name = "USUARIOS";
+
+    public function __construct($db) {
         $this->conn = $db;
     }
 
-    public function login($username)
-    {
-        $query = "SELECT * FROM usuarios WHERE username = ?";
+    public function registrar($nombre, $correo, $password, $rol = 'usuario') {
+        $password_hash = password_hash($password, PASSWORD_BCRYPT);
+        
+        $query = "INSERT INTO " . $this->table_name . " (NOMBRE, CORREO, PASSWORD, ROL) VALUES (:nombre, :correo, :password, :rol)";
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
+        
+        $stmt->bindParam(':nombre', $nombre);
+        $stmt->bindParam(':correo', $correo);
+        $stmt->bindParam(':password', $password_hash);
+        $stmt->bindParam(':rol', $rol);
+        
+        return $stmt->execute();
     }
 
-    public function create($username, $password)
-    {
-        $query = "INSERT INTO usuarios (username, password, rol) VALUES (?, ?, 'usuario')";
+    public function login($correo, $password) {
+        $query = "SELECT ID, NOMBRE, PASSWORD, ROL FROM " . $this->table_name . " WHERE CORREO = :correo";
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("ss", $username,  $password);
+        $stmt->bindParam(':correo', $correo);
         $stmt->execute();
-        return $stmt->affected_rows > 0;
-    }
-
-    public function findById($id)
-    {
-        $query = "SELECT * FROM usuarios WHERE id = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
+        
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (password_verify($password, $row['PASSWORD'])) {
+                return $row;
+            }
+        }
+        return false;
     }
 }

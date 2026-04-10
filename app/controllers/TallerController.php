@@ -49,4 +49,4 @@ class TallerController
         $usuarioId = $_SESSION['id'];
 
     }
-}
+}   
